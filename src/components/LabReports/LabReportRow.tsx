@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { FileText, Image as ImageIcon, Eye, Trash2, Loader2 } from 'lucide-react';
+import { FileText, Image as ImageIcon, Eye, Trash2 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { getLabReportSignedUrl } from '../../lib/storage';
+import { LabReportViewer } from './LabReportViewer';
 import { LabReport } from '../../types';
 
 const TYPE_COLORS: Record<string, string> = {
@@ -18,21 +18,9 @@ interface LabReportRowProps {
 }
 
 export const LabReportRow: React.FC<LabReportRowProps> = ({ report, showPetColumn, onViewPet }) => {
-  const { deleteLabReport, showToast } = useApp();
-  const [isOpening, setIsOpening] = useState(false);
+  const { deleteLabReport } = useApp();
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
   const isImage = report.fileType.startsWith('image/');
-
-  const handleView = async () => {
-    setIsOpening(true);
-    try {
-      const url = await getLabReportSignedUrl(report.filePath);
-      window.open(url, '_blank', 'noopener,noreferrer');
-    } catch (err: any) {
-      showToast(err?.message || 'Could not open this file.', 'error');
-    } finally {
-      setIsOpening(false);
-    }
-  };
 
   const handleDelete = () => {
     if (window.confirm(`Delete this ${report.reportType} report? This cannot be undone.`)) {
@@ -69,12 +57,11 @@ export const LabReportRow: React.FC<LabReportRowProps> = ({ report, showPetColum
       <div className="flex items-center gap-1 shrink-0">
         <button
           type="button"
-          onClick={handleView}
-          disabled={isOpening}
-          className="p-2 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer disabled:opacity-50"
-          title="View / Download"
+          onClick={() => setIsViewerOpen(true)}
+          className="p-2 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
+          title="View report"
         >
-          {isOpening ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Eye className="w-3.5 h-3.5" />}
+          <Eye className="w-3.5 h-3.5" />
         </button>
         <button
           type="button"
@@ -85,6 +72,7 @@ export const LabReportRow: React.FC<LabReportRowProps> = ({ report, showPetColum
           <Trash2 className="w-3.5 h-3.5" />
         </button>
       </div>
+      {isViewerOpen && <LabReportViewer report={report} onClose={() => setIsViewerOpen(false)} />}
     </div>
   );
 };

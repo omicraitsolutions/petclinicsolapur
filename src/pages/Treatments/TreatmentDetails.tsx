@@ -10,6 +10,7 @@ import { PetPicker } from '../../components/PetPicker/PetPicker';
 import { LabReportUploadModal } from '../../components/LabReports/LabReportUploadModal';
 import { Table, Column } from '../../components/Tables/Table';
 import { Button } from '../../components/Buttons/Button';
+import { InvoiceFormModal } from '../../components/Billing/InvoiceFormModal';
 import { MedicalVisit, Pet } from '../../types';
 
 export const TreatmentDetails: React.FC = () => {
@@ -40,6 +41,7 @@ export const TreatmentDetails: React.FC = () => {
   const [lastSavedVisitId, setLastSavedVisitId] = useState<string | null>(null);
   const [linkedAppointmentId, setLinkedAppointmentId] = useState<string | null>(null);
   const [isLabUploadOpen, setIsLabUploadOpen] = useState(false);
+  const [invoiceTarget, setInvoiceTarget] = useState<{ petId: string; visitId?: string } | null>(null);
 
   // Arriving from a Pet Profile's "Add Visit Record" link, or from "Start Visit"
   // on a booked appointment, lands with that pet already selected.
@@ -115,8 +117,7 @@ export const TreatmentDetails: React.FC = () => {
   // linked to it automatically.
   const handleGenerateInvoice = () => {
     if (!selectedPet) return;
-    const visitParam = lastSavedVisitId ? `&visitId=${lastSavedVisitId}` : '';
-    navigate(`/billing?petId=${selectedPet.id}${visitParam}`);
+    setInvoiceTarget({ petId: selectedPet.id, visitId: lastSavedVisitId || undefined });
   };
 
   // Turns a typed "Next Visit" date into an actual booked appointment
@@ -177,7 +178,7 @@ export const TreatmentDetails: React.FC = () => {
           return (
             <button
               type="button"
-              onClick={() => navigate(`/billing?petId=${v.petId}&visitId=${v.id}`)}
+              onClick={() => setInvoiceTarget({ petId: v.petId, visitId: v.id })}
               className="inline-flex items-center gap-1 text-[11px] font-semibold rounded-full px-2 py-0.5 cursor-pointer bg-slate-100 text-slate-600 hover:bg-slate-200"
             >
               <Receipt className="w-3 h-3" /> Bill
@@ -402,6 +403,13 @@ export const TreatmentDetails: React.FC = () => {
       {selectedPet && (
         <LabReportUploadModal isOpen={isLabUploadOpen} onClose={() => setIsLabUploadOpen(false)} fixedPet={selectedPet} />
       )}
+
+      <InvoiceFormModal
+        isOpen={!!invoiceTarget}
+        onClose={() => setInvoiceTarget(null)}
+        petId={invoiceTarget?.petId}
+        visitId={invoiceTarget?.visitId}
+      />
     </div>
   );
 };

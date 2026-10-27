@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Calendar, Plus, Eye, Stethoscope, CalendarClock, AlertTriangle, AlertCircle, CheckCircle2, Search, X } from 'lucide-react';
+import { Calendar, Plus, Eye, Stethoscope, CalendarClock, AlertTriangle, AlertCircle, CheckCircle2, Search, X, Receipt } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { SectionCard } from '../../components/Cards/SectionCard';
 import { InputField } from '../../components/Inputs/InputField';
@@ -8,6 +8,7 @@ import { PetPicker } from '../../components/PetPicker/PetPicker';
 import { Table, Column } from '../../components/Tables/Table';
 import { StatusBadge } from '../../components/Tables/StatusBadge';
 import { Button } from '../../components/Buttons/Button';
+import { InvoiceFormModal } from '../../components/Billing/InvoiceFormModal';
 import { Appointment, Pet } from '../../types';
 
 type QueueFilter = 'today' | 'upcoming' | 'all';
@@ -16,8 +17,17 @@ type CompletedFilter = 'all' | 'Completed' | 'Cancelled';
 const todayStr = () => new Date().toISOString().split('T')[0];
 
 export const AppointmentManagement: React.FC = () => {
-  const { appointments, addAppointment, updateAppointmentStatus, updateAppointment, pets, clinicSettings, showToast } =
-    useApp();
+  const {
+    appointments,
+    addAppointment,
+    updateAppointmentStatus,
+    updateAppointment,
+    pets,
+    medicalVisits,
+    invoices,
+    clinicSettings,
+    showToast
+  } = useApp();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -33,6 +43,7 @@ export const AppointmentManagement: React.FC = () => {
   const [reschedulingAppointment, setReschedulingAppointment] = useState<Appointment | null>(null);
   const [rescheduleDate, setRescheduleDate] = useState('');
   const [rescheduleTime, setRescheduleTime] = useState('');
+  const [invoiceTarget, setInvoiceTarget] = useState<{ petId?: string; petName: string; visitId?: string } | null>(null);
 
   // Today / Upcoming / All -- a worklist by default, not a full archive.
   const [queueFilter, setQueueFilter] = useState<QueueFilter>('today');
@@ -115,6 +126,19 @@ export const AppointmentManagement: React.FC = () => {
       updateAppointmentStatus(apt.id, 'Arrived');
     }
     navigate(`/treatments?petId=${apt.petId || ''}&appointmentId=${apt.id}`);
+  };
+
+  // Generates the invoice right here in a popup. If the appointment already has
+  // a recorded visit the invoice is linked to it; if that visit is already
+  // billed we say so instead of creating a duplicate.
+  const openInvoice = (apt: Appointment) => {
+    const visit = medicalVisits.find(v => v.appointmentId === apt.id);
+    if (visit?.invoiceId) {
+      const existing = invoices.find(i => i.id === visit.invoiceId);
+      showToast(`An invoice (${existing?.invoiceNumber || visit.invoiceId}) already exists for this visit.`, 'info');
+      return;
+    }
+    setInvoiceTarget({ petId: apt.petId || undefined, petName: apt.petName, visitId: visit?.id });
   };
 
   const openReschedule = (apt: Appointment) => {
@@ -241,7 +265,7 @@ export const AppointmentManagement: React.FC = () => {
     {
       header: 'Action',
       align: 'center',
-      width: '210px',
+      width: '250px',
       render: apt => (
         <div className="flex items-center justify-center gap-1.5">
           <button
@@ -268,6 +292,14 @@ export const AppointmentManagement: React.FC = () => {
             className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-md transition-colors cursor-pointer"
           >
             <Eye className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => openInvoice(apt)}
+            title="Generate invoice"
+            className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-md transition-colors cursor-pointer"
+          >
+            <Receipt className="w-3.5 h-3.5" />
           </button>
         </div>
       )
@@ -359,15 +391,28 @@ export const AppointmentManagement: React.FC = () => {
     {
       header: 'Action',
       align: 'center',
-      width: '90px',
+      width: '120px',
       render: apt => (
-        <button
-          type="button"
-          onClick={() => setViewingAppointment(apt)}
-          className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-md transition-colors cursor-pointer"
-        >
-          <Eye className="w-3.5 h-3.5" />
-        </button>
+        <div className="flex items-center justify-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setViewingAppointment(apt)}
+            title="View details"
+            className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-md transition-colors cursor-pointer"
+          >
+            <Eye className="w-3.5 h-3.5" />
+          </button>
+          {apt.status === 'Completed' && (
+            <button
+              type="button"
+              onClick={() => openInvoice(apt)}
+              title="Generate invoice"
+              className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-md transition-colors cursor-pointer"
+            >
+              <Receipt className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
       )
     }
   ];
@@ -767,6 +812,14 @@ export const AppointmentManagement: React.FC = () => {
           </div>
         </div>
       )}
+
+      <InvoiceFormModal
+        isOpen={!!invoiceTarget}
+        onClose={() => setInvoiceTarget(null)}
+        petId={invoiceTarget?.petId}
+        petName={invoiceTarget?.petName}
+        visitId={invoiceTarget?.visitId}
+      />
     </div>
   );
 };

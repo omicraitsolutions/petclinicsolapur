@@ -35,3 +35,11 @@ export async function deleteLabReportFile(filePath: string): Promise<void> {
   const { error } = await supabase.storage.from(BUCKET).remove([filePath]);
   if (error) throw error;
 }
+
+// Downloads the file's bytes (instead of a link) so it can be shown inside the
+// app's popup. Works with the same private-bucket access rules as signed URLs.
+export async function downloadLabReportBlob(filePath: string): Promise<Blob> {
+  const { data, error } = await supabase.storage.from(BUCKET).download(filePath);
+  if (error) throw error;
+  return data;
+}

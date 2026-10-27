@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Mail, Edit, User, HeartPulse, FlaskConical, Upload, FileText, ChevronDown, Download, Receipt } from 'lucide-react';
+import { Mail, Edit, User, HeartPulse, FlaskConical, Upload, FileText, Eye, Download, Receipt } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { PetProfileCard } from '../../components/Cards/PetProfileCard';
 import { SectionCard } from '../../components/Cards/SectionCard';
@@ -11,14 +11,16 @@ import { LabReportUploadModal } from '../../components/LabReports/LabReportUploa
 import { exportFormToPDF } from '../../utils/pdfExport';
 import { formatDate } from '../../utils/formatters';
 import { FORM_TEMPLATES } from '../../data/formTemplates';
-import { MedicalVisit, Pet } from '../../types';
+import { PreviewModal } from '../../components/Modal/PreviewModal';
+import { SavedFormView } from '../../components/Forms/SavedFormView';
+import { MedicalVisit, Pet, PetForm } from '../../types';
 
 export const PetProfile: React.FC = () => {
   const { pets, invoices, clinicSettings, getVisitsByPetId, getLabReportsByPetId, getFormsByPetId } = useApp();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const [expandedFormId, setExpandedFormId] = useState<string | null>(null);
+  const [viewingForm, setViewingForm] = useState<PetForm | null>(null);
 
   // Get active pet
   const requestedId = searchParams.get('id');
@@ -236,58 +238,37 @@ export const PetProfile: React.FC = () => {
         ) : (
           <div className="divide-y divide-slate-100">
             {petForms.map(form => {
-              const template = FORM_TEMPLATES.find(t => t.id === form.formType);
-              const fieldLabels: Record<string, string> = {};
-              template?.sections.forEach(section => {
-                section.fields.forEach(field => {
-                  fieldLabels[field.key] = field.label;
-                });
-              });
-              const isExpanded = expandedFormId === form.id;
-
               return (
-                <div key={form.id}>
-                  <div className="w-full flex items-center justify-between gap-3 px-6 py-3.5 hover:bg-slate-50">
+                <div
+                  key={form.id}
+                  className="w-full flex items-center justify-between gap-3 px-6 py-3.5 hover:bg-slate-50"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setViewingForm(form)}
+                    className="flex-1 text-left cursor-pointer"
+                  >
+                    <p className="text-sm font-bold text-slate-800">{form.formTitle}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">{formatDate(form.createdAt)}</p>
+                  </button>
+                  <div className="flex items-center gap-1 shrink-0">
                     <button
                       type="button"
-                      onClick={() => setExpandedFormId(isExpanded ? null : form.id)}
-                      className="flex-1 text-left cursor-pointer"
+                      onClick={() => setViewingForm(form)}
+                      className="p-2 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
+                      title="View form"
                     >
-                      <p className="text-sm font-bold text-slate-800">{form.formTitle}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{formatDate(form.createdAt)}</p>
+                      <Eye className="w-3.5 h-3.5" />
                     </button>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => handleDownloadFormPDF(form.formType, form.data)}
-                        className="p-2 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
-                        title="Download PDF"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setExpandedFormId(isExpanded ? null : form.id)}
-                        className="p-2 rounded-md hover:bg-slate-200 text-slate-400 transition-colors cursor-pointer"
-                      >
-                        <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadFormPDF(form.formType, form.data)}
+                      className="p-2 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
+                      title="Download PDF"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                    </button>
                   </div>
-                  {isExpanded && (
-                    <div className="px-6 pb-4 grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6">
-                      {Object.entries(form.data)
-                        .filter(([, value]) => value)
-                        .map(([key, value]) => (
-                          <div key={key}>
-                            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-                              {fieldLabels[key] || key}
-                            </span>
-                            <span className="text-sm text-slate-700">{value}</span>
-                          </div>
-                        ))}
-                    </div>
-                  )}
                 </div>
               );
             })}
@@ -321,6 +302,37 @@ export const PetProfile: React.FC = () => {
           Edit Profile
         </Button>
       </div>
+
+      {viewingForm && (
+        <PreviewModal
+          title={viewingForm.formTitle}
+          subtitle={`${viewingForm.petName} • ${viewingForm.ownerName} • ${formatDate(viewingForm.createdAt)}`}
+          icon={<FileText className="w-4 h-4" />}
+          onClose={() => setViewingForm(null)}
+          footer={
+            <>
+              <Button variant="secondary" size="sm" onClick={() => setViewingForm(null)}>
+                Close
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                icon={<Download className="w-4 h-4" />}
+                onClick={() => handleDownloadFormPDF(viewingForm.formType, viewingForm.data)}
+              >
+                Download
+              </Button>
+            </>
+          }
+        >
+          <div className="absolute inset-0 overflow-y-auto">
+            <SavedFormView
+              template={FORM_TEMPLATES.find(t => t.id === viewingForm.formType)}
+              values={viewingForm.data}
+            />
+          </div>
+        </PreviewModal>
+      )}
 
       {currentPet && (
         <LabReportUploadModal isOpen={isUploadOpen} onClose={() => setIsUploadOpen(false)} fixedPet={currentPet} />

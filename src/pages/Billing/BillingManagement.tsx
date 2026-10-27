@@ -202,54 +202,47 @@ export const BillingManagement: React.FC = () => {
     {
       header: 'Action',
       align: 'center',
-      width: '160px',
-      render: inv => (
-        <div className="flex items-center justify-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => setReceiptPreview(inv)}
-            className="p-1.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
-            title="View Bill Receipt"
-          >
-            <FileText className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => handlePrintInvoice(inv)}
-            className="p-1.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
-            title="Download / Print Invoice"
-          >
-            <Printer className="w-3.5 h-3.5" />
-          </button>
-          {inv.status === 'Pending' && (
-            <>
-              <button
-                type="button"
-                onClick={() => updateInvoiceStatus(inv.id, 'Paid')}
-                className="px-2 py-1 rounded-md bg-[#16A34A] hover:bg-[#15803d] text-white text-xs font-semibold"
-              >
-                Mark Paid
+      width: '330px',
+      render: inv => {
+        // Three fixed slots (icons | primary action | secondary action) so the
+        // buttons sit in the same place on every row, whatever the status.
+        const actionBtn = 'h-8 w-[104px] inline-flex items-center justify-center whitespace-nowrap rounded-md text-white text-xs font-semibold transition-colors cursor-pointer';
+        const iconBtn = 'h-8 w-8 inline-flex items-center justify-center rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer';
+        return (
+          <div className="flex items-center justify-center gap-3">
+            <div className="flex items-center gap-1.5 w-[70px] justify-start shrink-0">
+              <button type="button" onClick={() => setReceiptPreview(inv)} className={iconBtn} title="View Bill Receipt">
+                <FileText className="w-3.5 h-3.5" />
               </button>
-              <button
-                type="button"
-                onClick={() => updateInvoiceStatus(inv.id, 'Overdue')}
-                className="px-2 py-1 rounded-md bg-[#DC2626] hover:bg-[#b91c1c] text-white text-xs font-semibold"
-              >
-                Mark Overdue
+              <button type="button" onClick={() => handlePrintInvoice(inv)} className={iconBtn} title="Download / Print Invoice">
+                <Printer className="w-3.5 h-3.5" />
               </button>
-            </>
-          )}
-          {inv.status === 'Overdue' && (
-            <button
-              type="button"
-              onClick={() => updateInvoiceStatus(inv.id, 'Paid')}
-              className="px-2 py-1 rounded-md bg-[#16A34A] hover:bg-[#15803d] text-white text-xs font-semibold"
-            >
-              Mark Paid
-            </button>
-          )}
-        </div>
-      )
+            </div>
+            <div className="w-[104px] shrink-0">
+              {inv.status !== 'Paid' && (
+                <button
+                  type="button"
+                  onClick={() => updateInvoiceStatus(inv.id, 'Paid')}
+                  className={`${actionBtn} bg-[#16A34A] hover:bg-[#15803d]`}
+                >
+                  Mark Paid
+                </button>
+              )}
+            </div>
+            <div className="w-[104px] shrink-0">
+              {inv.status === 'Pending' && (
+                <button
+                  type="button"
+                  onClick={() => updateInvoiceStatus(inv.id, 'Overdue')}
+                  className={`${actionBtn} bg-[#DC2626] hover:bg-[#b91c1c]`}
+                >
+                  Mark Overdue
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      }
     }
   ];
 
