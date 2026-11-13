@@ -22,6 +22,7 @@ const TreatmentHistory = named(() => import('../pages/Treatments/TreatmentHistor
 const AppointmentManagement = named(() => import('../pages/Appointments/AppointmentManagement'), 'AppointmentManagement');
 const BillingManagement = named(() => import('../pages/Billing/BillingManagement'), 'BillingManagement');
 const ReportsAnalytics = named(() => import('../pages/Reports/ReportsAnalytics'), 'ReportsAnalytics');
+const Reminders = named(() => import('../pages/Reminders/Reminders'), 'Reminders');
 const EmailReport = named(() => import('../pages/EmailReport/EmailReport'), 'EmailReport');
 const Settings = named(() => import('../pages/Settings/Settings'), 'Settings');
 const FormsCenter = named(() => import('../pages/Forms/FormsCenter'), 'FormsCenter');
@@ -78,6 +79,7 @@ export const AppRoutes: React.FC = () => {
           <Route path="treatment" element={<TreatmentDetails />} />
           <Route path="treatment-history" element={<TreatmentHistory />} />
           <Route path="appointments" element={<AppointmentManagement />} />
+          <Route path="reminders" element={<Reminders />} />
           <Route path="billing" element={<BillingManagement />} />
           <Route path="forms" element={<FormsCenter />} />
           <Route path="lab-reports" element={<LabReportsOverview />} />

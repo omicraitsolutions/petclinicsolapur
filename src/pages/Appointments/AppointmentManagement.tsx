@@ -174,7 +174,8 @@ export const AppointmentManagement: React.FC = () => {
     updateAppointment(reschedulingAppointment.id, {
       date: rescheduleDate,
       time: rescheduleTime,
-      status: 'Confirmed'
+      status: 'Confirmed',
+      rescheduledFrom: `${reschedulingAppointment.date} ${reschedulingAppointment.time}`
     });
     showToast(
       `Appointment for ${reschedulingAppointment.petName} rescheduled to ${rescheduleDate} at ${rescheduleTime}.`,

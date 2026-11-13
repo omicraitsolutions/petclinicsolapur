@@ -76,7 +76,7 @@ interface AppContextType {
 
   // Email
   emailsSentCount: number;
-  sendEmail: (params: { to: string; subject: string; text: string; html?: string }) => Promise<{ success: boolean; error?: string }>;
+  sendEmail: (params: { to: string; subject: string; text: string; html?: string; successMessage?: string }) => Promise<{ success: boolean; error?: string }>;
 
   // Saved medical forms
   savePetForm: (params: {
@@ -753,6 +753,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     subject: string;
     text: string;
     html?: string;
+    successMessage?: string;
   }): Promise<{ success: boolean; error?: string }> => {
     const userId = requireUserId();
     if (!userId) return { success: false, error: 'Not authenticated.' };
@@ -762,7 +763,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       setEmailsSentCount(prev => prev + 1);
       db.logEmail({ toEmail: params.to, subject: params.subject, status: 'sent' }, userId).catch(() => {});
-      showToast(`Treatment summary successfully emailed to ${params.to}!`, 'success');
+      showToast(params.successMessage || `Treatment summary successfully emailed to ${params.to}!`, 'success');
       return { success: true };
     } catch (err: any) {
       const message =

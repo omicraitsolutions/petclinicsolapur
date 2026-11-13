@@ -61,6 +61,7 @@ export interface Appointment {
   mobileNumber: string;
   doctor: string;
   status: 'Confirmed' | 'Pending' | 'Arrived' | 'Completed' | 'Cancelled';
+  rescheduledFrom?: string; // previous "YYYY-MM-DD HH:mm", set when the appointment was rescheduled
 }
 
 export type LabReportType = 'Blood Test' | 'X-Ray' | 'Ultrasound' | 'Other';

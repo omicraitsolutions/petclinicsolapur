@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PawPrint, Calendar, Stethoscope, IndianRupee, Check, Clock, AlertCircle } from 'lucide-react';
+import { PawPrint, Calendar, Stethoscope, IndianRupee, Check, Clock, AlertCircle, BellRing } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { StatCard } from '../../components/Cards/StatCard';
 import { SectionCard } from '../../components/Cards/SectionCard';
@@ -8,11 +8,14 @@ import { Table, Column } from '../../components/Tables/Table';
 import { SearchBar } from '../../components/Inputs/SearchBar';
 import { isPetProfileIncomplete } from '../../utils/petProfile';
 import { formatCurrency } from '../../utils/formatters';
+import { useReminders, summarize } from '../../hooks/useReminders';
 import { Pet } from '../../types';
 
 export const Dashboard: React.FC = () => {
   const { pets, appointments, medicalVisits, invoices, clinicSettings } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
+  const { urgentCount, urgentCounts, pendingTotal } = useReminders();
+  const reminderLines = summarize(urgentCounts, pendingTotal);
   const navigate = useNavigate();
 
   // Visits are stamped with a "D MMM YYYY" string (see TreatmentDetails), so
@@ -27,11 +30,7 @@ export const Dashboard: React.FC = () => {
   // actually due today or overdue, a visit nobody has billed yet, and an
   // invoice that's gone Overdue. Each links straight to where it's fixed.
   const today = new Date();
-  const followUpsDueCount = medicalVisits.filter(v => {
-    if (!v.nextVisit) return false;
-    const next = new Date(v.nextVisit);
-    return !isNaN(next.getTime()) && next <= today;
-  }).length;
+  const followUpsDueCount = urgentCounts.followup;
   const unbilledVisitsCount = medicalVisits.filter(v => !v.invoiceId).length;
   const overdueInvoicesCount = invoices.filter(i => i.status === 'Overdue').length;
 
@@ -125,6 +124,31 @@ export const Dashboard: React.FC = () => {
             placeholder="Search..."
           />
         </div>
+      </div>
+
+      {/* Reminders banner */}
+      <div
+        onClick={() => navigate('/reminders')}
+        className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-colors ${
+          urgentCount > 0
+            ? 'bg-[#FEF6E6] border-[#fde68a] hover:bg-[#fdefd0]'
+            : 'bg-[#E8F8F0] border-[#bbf0d7] hover:bg-[#dcf4e8]'
+        }`}
+      >
+        <BellRing className={`w-5 h-5 shrink-0 ${urgentCount > 0 ? 'text-[#D97706]' : 'text-[#1E8E5A]'}`} />
+        <div className="flex-1 min-w-0 text-sm">
+          {urgentCount > 0 ? (
+            <>
+              <span className="font-bold text-slate-800">
+                {urgentCount} reminder{urgentCount === 1 ? '' : 's'} need attention: 
+              </span>
+              <span className="text-slate-700">{reminderLines.join(' · ')}</span>
+            </>
+          ) : (
+            <span className="font-semibold text-slate-700">No reminders due today. You're all caught up.</span>
+          )}
+        </div>
+        <span className="text-xs font-semibold text-[#0F6B63] shrink-0">View →</span>
       </div>
 
       {/* 4 Stat Cards */}
@@ -238,7 +262,7 @@ export const Dashboard: React.FC = () => {
           <SectionCard title="Notifications" bodyClassName="p-4">
             <div className="space-y-2.5 text-xs font-medium text-slate-700">
               <div
-                onClick={() => navigate('/appointments')}
+                onClick={() => navigate('/reminders')}
                 className="flex items-center gap-2.5 p-3 rounded-lg bg-purple-50/70 text-purple-800 border border-purple-100 cursor-pointer hover:bg-purple-100/70 transition-colors"
               >
                 <Clock className="w-4 h-4 text-purple-600 shrink-0" />

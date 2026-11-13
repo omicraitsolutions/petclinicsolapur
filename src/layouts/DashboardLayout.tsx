@@ -4,6 +4,7 @@ import { WifiOff } from 'lucide-react';
 import { Sidebar } from '../components/Sidebar/Sidebar';
 import { Navbar } from '../components/Navbar/Navbar';
 import { ToastContainer } from '../components/Toast/Toast';
+import { ReminderAlerts } from '../components/Reminders/ReminderAlerts';
 import { useApp } from '../context/AppContext';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
@@ -18,6 +19,7 @@ const PAGE_TITLES: Record<string, string> = {
   treatment: 'Treatment Details',
   'treatment-history': 'Treatment History',
   appointments: 'Appointment Management',
+  reminders: 'Reminders',
   billing: 'Billing & Invoices',
   forms: 'Forms',
   'lab-reports': 'Lab Reports',
@@ -65,6 +67,7 @@ export const DashboardLayout: React.FC = () => {
         </main>
       </div>
 
+      <ReminderAlerts />
       <ToastContainer />
     </div>
   );

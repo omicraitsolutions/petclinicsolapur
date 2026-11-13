@@ -128,7 +128,8 @@ const toAppointment = (r: any): Appointment => ({
   ownerName: r.owner_name || '',
   mobileNumber: r.mobile_number || '',
   doctor: r.doctor || '',
-  status: r.status
+  status: r.status,
+  rescheduledFrom: r.rescheduled_from || ''
 });
 
 const fromAppointment = (a: Partial<Appointment>, userId: string) => ({
@@ -141,7 +142,8 @@ const fromAppointment = (a: Partial<Appointment>, userId: string) => ({
   ...(a.ownerName !== undefined && { owner_name: a.ownerName }),
   ...(a.mobileNumber !== undefined && { mobile_number: a.mobileNumber }),
   ...(a.doctor !== undefined && { doctor: a.doctor }),
-  ...(a.status !== undefined && { status: a.status })
+  ...(a.status !== undefined && { status: a.status }),
+  ...(a.rescheduledFrom !== undefined && { rescheduled_from: a.rescheduledFrom })
 });
 
 const toInvoice = (r: any): InvoiceItem => ({

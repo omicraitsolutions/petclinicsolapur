@@ -11,6 +11,7 @@ import {
   Receipt,
   BarChart2,
   Mail,
+  BellRing,
   Settings,
   LogOut,
   FileText,
@@ -20,6 +21,7 @@ import {
   X
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { useReminders } from '../../hooks/useReminders';
 
 export interface SidebarProps {
   isOpen: boolean;
@@ -28,6 +30,7 @@ export interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { logout, clinicSettings } = useApp();
+  const { urgentCount } = useReminders();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -43,6 +46,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     { label: 'Pets', path: '/pets', icon: <PawPrint className="w-4 h-4" /> },
     { label: 'Treatments', path: '/treatments', icon: <Stethoscope className="w-4 h-4" /> },
     { label: 'Appointments', path: '/appointments', icon: <Calendar className="w-4 h-4" /> },
+    { label: 'Reminders', path: '/reminders', icon: <BellRing className="w-4 h-4" />, badge: urgentCount },
     { label: 'Forms', path: '/forms', icon: <FileText className="w-4 h-4" /> },
     { label: 'Billing', path: '/billing', icon: <Receipt className="w-4 h-4" /> },
     { label: 'Email Report', path: '/email-report', icon: <Mail className="w-4 h-4" /> }
@@ -71,7 +75,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     if (isMoreActive) setIsMoreOpen(true);
   }, [isMoreActive]);
 
-  const renderNavLink = (item: { label: string; path: string; icon: React.ReactNode }, indent = false) => {
+  const renderNavLink = (item: { label: string; path: string; icon: React.ReactNode; badge?: number }, indent = false) => {
     const isActive = isItemActive(item.path);
     return (
       <NavLink
@@ -91,7 +95,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         >
           {item.icon}
         </span>
-        <span className="truncate">{item.label}</span>
+        <span className="truncate flex-1">{item.label}</span>
+        {item.badge ? (
+          <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-[#F97316] text-white text-[11px] font-bold flex items-center justify-center">
+            {item.badge > 99 ? '99+' : item.badge}
+          </span>
+        ) : null}
       </NavLink>
     );
   };
